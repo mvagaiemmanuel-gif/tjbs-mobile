@@ -1,5 +1,5 @@
 // Service Worker TJBS Mobile - fonctionnement hors-ligne
-const CACHE_NAME = 'tjbs-cache-v2';
+const CACHE_NAME = 'tjbs-cache-v3';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
