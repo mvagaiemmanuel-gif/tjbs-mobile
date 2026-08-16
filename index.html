@@ -50,7 +50,47 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-900 h-full flex flex-col overflow-hidden">
+<!-- Écran de verrouillage PIN -->
+<div id="lock-screen" style="position:fixed; inset:0; background:#0D1B2A; z-index:9999; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:20px;">
+  <div style="width:64px; height:64px; background:white; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+    <img src="icon-96.png" alt="Logo TJBS" style="width:100%; height:100%; object-fit:contain; border-radius:50%;">
+  </div>
+  <h1 style="color:white; font-size:18px; font-weight:bold; margin-bottom:4px;">TJBS Mobile</h1>
+  <p style="color:#D4AF37; font-size:12px; margin-bottom:24px;">Entrez votre code d'accès</p>
+  <input type="password" id="pin-input" inputmode="numeric" maxlength="4" pattern="[0-9]*"
+    style="width:160px; text-align:center; font-size:24px; letter-spacing:12px; padding:12px; border-radius:8px; border:none; margin-bottom:16px;"
+    autofocus>
+  <p id="pin-error" style="color:#ff6b6b; font-size:12px; height:16px;"></p>
+  <button onclick="checkPin()" style="background:#2E7D32; color:white; padding:10px 32px; border-radius:8px; border:none; font-weight:bold; margin-top:8px;">
+    Déverrouiller
+  </button>
+</div>
 
+<script>
+  const CORRECT_PIN = "4321";
+
+  function checkPin() {
+    const entered = document.getElementById('pin-input').value;
+    if (entered === CORRECT_PIN) {
+      document.getElementById('lock-screen').style.display = 'none';
+      sessionStorage.setItem('tjbs-unlocked', 'true');
+    } else {
+      document.getElementById('pin-error').textContent = 'Code incorrect';
+      document.getElementById('pin-input').value = '';
+    }
+  }
+
+  // Permet de valider avec la touche Entrée
+  document.addEventListener('DOMContentLoaded', () => {
+    // Si déjà déverrouillé dans cette session, on saute l'écran
+    if (sessionStorage.getItem('tjbs-unlocked') === 'true') {
+      document.getElementById('lock-screen').style.display = 'none';
+    }
+    document.getElementById('pin-input').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') checkPin();
+    });
+  });
+</script>
     <!-- App Header -->
     <header class="bg-tjbsNavy text-white shadow-md z-20 flex-shrink-0">
         <div class="max-w-md mx-auto px-4 py-3 flex items-center justify-between">
