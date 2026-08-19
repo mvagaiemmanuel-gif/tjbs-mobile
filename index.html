@@ -394,6 +394,7 @@
         window.tjbsAuth.currentEmail = cred.user.email;
         return { ok: true, role, email: cred.user.email };
       } catch (e) {
+        console.error('Erreur de connexion TJBS :', e);
         let msg = "Connexion impossible. Vérifiez l'email et le mot de passe.";
         if (e && e.code === 'auth/invalid-credential') msg = "Email ou mot de passe incorrect.";
         if (e && e.code === 'auth/too-many-requests') msg = "Trop de tentatives. Réessayez plus tard.";
@@ -466,6 +467,8 @@
   };
 </script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/eruda"></script>
+<script>eruda.init();</script>
 </head>
 <body>
 
