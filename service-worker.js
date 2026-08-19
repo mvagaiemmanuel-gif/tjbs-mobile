@@ -1,75 +1,50 @@
-// Service Worker TJBS Mobile - fonctionnement hors-ligne
-const CACHE_NAME = 'tjbs-cache-v3';
-const ASSETS_TO_CACHE = [
-  './',
+const CACHE_NAME = 'tjbs-mobile-v1';
+const APP_SHELL = [
   './index.html',
   './manifest.json',
-  './icon-72.png',
-  './icon-96.png',
-  './icon-128.png',
-  './icon-144.png',
-  './icon-152.png',
   './icon-192.png',
-  './icon-384.png',
-  './icon-512.png',
-  'https://cdn.tailwindcss.com',
-  'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css',
-  'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
-  'https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap'
+  './icon-512.png'
 ];
 
-// Installation : mise en cache des ressources statiques
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS_TO_CACHE).catch((err) => {
-        // Certaines ressources externes (CDN) peuvent échouer selon le réseau ;
-        // on continue quand même l'installation avec ce qui a pu être mis en cache.
-        console.warn('Certaines ressources n\'ont pas pu être pré-cachées :', err);
-      });
-    })
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL))
   );
   self.skipWaiting();
 });
 
-// Activation : nettoyage des anciens caches
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((keys) => {
-      return Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      );
-    })
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key !== CACHE_NAME)
+          .map((key) => caches.delete(key))
+      )
+    )
   );
   self.clients.claim();
 });
 
-// Stratégie : cache d'abord, puis réseau (permet l'usage hors-ligne)
 self.addEventListener('fetch', (event) => {
-  if (event.request.method !== 'GET') return;
+  // Ne pas intercepter les appels vers Firebase / Google (données live)
+  if (event.request.url.includes('firebaseio.com') ||
+      event.request.url.includes('googleapis.com') ||
+      event.request.url.includes('gstatic.com') ||
+      event.request.url.includes('firebaseapp.com')) {
+    return;
+  }
 
   event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
-      return fetch(event.request)
-        .then((networkResponse) => {
-          // Mise en cache dynamique des nouvelles ressources récupérées avec succès
-          if (networkResponse && networkResponse.status === 200) {
-            const responseClone = networkResponse.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseClone);
-            });
-          }
-          return networkResponse;
-        })
-        .catch(() => {
-          // Hors-ligne et pas en cache : retourne la page principale en secours pour la navigation
-          if (event.request.mode === 'navigate') {
-            return caches.match('./index.html');
-          }
-        });
+    caches.match(event.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(event.request).then((response) => {
+        if (response && response.status === 200 && event.request.method === 'GET') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => cached);
     })
   );
 });
