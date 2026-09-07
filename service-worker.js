@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tjbs-mobile-v2';
+const CACHE_NAME = 'tjbs-mobile-v3';
 const APP_SHELL = [
   './index.html',
   './manifest.json',
